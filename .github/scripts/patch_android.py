@@ -7,7 +7,7 @@ script adds what the app needs on top of the default template:
   * INTERNET + RECORD_AUDIO (+ bluetooth) permissions
   * <queries> entries so speech recognition and TTS are visible on Android 11+
   * a friendly app label
-  * minSdkVersion 21
+  * minSdkVersion 23
   * the app's own launcher icons
 
 It is written to be idempotent and to fail loudly if the expected files are
@@ -78,8 +78,10 @@ def patch_gradle() -> None:
         sys.exit(f"ERROR: {GRADLE} not found")
 
     text = GRADLE.read_text(encoding="utf-8")
-    if "minSdkVersion 21" not in text:
-        text = text.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 21")
+    # record_android (used for the live-class microphone) requires API 23.
+    if "minSdkVersion 23" not in text:
+        text = text.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 23")
+        text = text.replace("minSdkVersion 21", "minSdkVersion 23")
     GRADLE.write_text(text, encoding="utf-8")
     print("Patched", GRADLE)
 

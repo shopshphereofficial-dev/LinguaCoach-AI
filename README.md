@@ -123,7 +123,7 @@ git clone https://github.com/shopshphereofficial-dev/LinguaCoach-AI.git
 cd LinguaCoach-AI
 
 flutter create --platforms=android --org com.linguacoach --project-name lingua_coach_ai .
-python3 .github/scripts/patch_android.py    # permissions, minSdk 21, icons
+python3 .github/scripts/patch_android.py    # permissions, minSdk 23, icons
 
 flutter pub get
 flutter run --dart-define=GEMINI_API_KEY="YOUR_KEY"
