@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/language.dart';
+import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/language_card.dart';
@@ -72,7 +73,95 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 0, 4),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Text(
+                    'Your teachers',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 96,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(right: 16),
+                    itemCount: kTeachers.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      final teacher = kTeachers[index];
+                      final selected = teacher.id == settings.teacherId;
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => settings.setTeacherId(teacher.id),
+                        child: Container(
+                          width: 118,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: teacher.accent
+                                .withOpacity(selected ? 0.20 : 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: selected
+                                  ? teacher.accent
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor:
+                                    teacher.accent.withOpacity(0.25),
+                                child: Text(
+                                  teacher.name.substring(0, 1),
+                                  style: TextStyle(
+                                    color: teacher.accent,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                teacher.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                teacher.specialty,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           sliver: SliverToBoxAdapter(
             child: TextField(
               onChanged: (v) => setState(() => _query = v),

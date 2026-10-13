@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/language.dart';
+import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/common.dart';
@@ -10,10 +11,11 @@ import 'daily_practice_screen.dart';
 import 'exercises_screen.dart';
 import 'grammar_screen.dart';
 import 'lessons_screen.dart';
+import 'live_class_screen.dart';
 import 'roleplay_screen.dart';
 import 'speaking_screen.dart';
 
-/// The hub for one language: level selector plus the seven features.
+/// The hub for one language: level selector, the live class and the rest.
 class LanguageDetailScreen extends StatelessWidget {
   final Language language;
 
@@ -27,6 +29,7 @@ class LanguageDetailScreen extends StatelessWidget {
     final level = progress.levelFor(language.code);
     final xp = progress.xpFor(language.code);
     final native = languageByCode(settings.nativeLanguage);
+    final teacher = teacherById(settings.teacherId);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,6 +44,57 @@ class LanguageDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // ---------------------------------------------------- live class
+          Card(
+            child: InkWell(
+              onTap: () => _open(
+                context,
+                LiveClassScreen(language: language, level: level),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: teacher.accent.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.graphic_eq, color: teacher.accent),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Live class with ${teacher.name}',
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Real-time voice — just talk, ${teacher.name} '
+                            'answers instantly and you can interrupt.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: theme.colorScheme.onSurfaceVariant),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // -------------------------------------------------------- level
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -66,8 +120,7 @@ class LanguageDetailScreen extends StatelessWidget {
                       return ChoiceChip(
                         label: Text(l.label),
                         selected: level == l,
-                        onSelected: (_) =>
-                            progress.setLevel(language.code, l),
+                        onSelected: (_) => progress.setLevel(language.code, l),
                       );
                     }).toList(),
                   ),
@@ -94,7 +147,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'AI Conversation Coach',
             subtitle: 'Chat with a tutor, get corrections as you go',
             color: Colors.green,
-            onTap: () => _open(context, ConversationScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              ConversationScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 10),
           FeatureTile(
@@ -102,7 +158,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'Speaking Practice',
             subtitle: 'Speak on a topic and get a score out of 10',
             color: Colors.blue,
-            onTap: () => _open(context, SpeakingScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              SpeakingScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 10),
           FeatureTile(
@@ -110,7 +169,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'Lessons',
             subtitle: 'AI lessons with vocabulary and examples',
             color: Colors.purple,
-            onTap: () => _open(context, LessonsScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              LessonsScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 10),
           FeatureTile(
@@ -118,7 +180,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'Exercises',
             subtitle: 'Quizzes: multiple choice, blanks, listening',
             color: Colors.orange,
-            onTap: () => _open(context, ExercisesScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              ExercisesScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 10),
           FeatureTile(
@@ -126,7 +191,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'Grammar Correction',
             subtitle: 'Paste any text and get it fixed with explanations',
             color: Colors.teal,
-            onTap: () => _open(context, GrammarScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              GrammarScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 10),
           FeatureTile(
@@ -134,7 +202,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'Daily Practice',
             subtitle: 'A word, a phrase and a challenge for today',
             color: Colors.amber.shade800,
-            onTap: () => _open(context, DailyPracticeScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              DailyPracticeScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 10),
           FeatureTile(
@@ -142,7 +213,10 @@ class LanguageDetailScreen extends StatelessWidget {
             title: 'Role-play Scenarios',
             subtitle: 'Restaurant, airport, interview and more',
             color: Colors.pink,
-            onTap: () => _open(context, RolePlayScreen(language: language, level: level)),
+            onTap: () => _open(
+              context,
+              RolePlayScreen(language: language, level: level),
+            ),
           ),
           const SizedBox(height: 24),
           Center(

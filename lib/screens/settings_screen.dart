@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/language.dart';
+import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/gemini_service.dart';
+import '../widgets/app_logo.dart';
 import '../widgets/common.dart';
 
-/// The Settings tab: API key, model, native language, theme and reset.
+/// The Settings tab: API key, models, teacher, native language, theme, reset.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -15,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final settings = context.watch<SettingsProvider>();
+    final teacher = teacherById(settings.teacherId);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -51,7 +54,6 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton.icon(
-                      // Nothing to remove while the built-in key is in use.
                       onPressed: settings.usingBuiltInKey
                           ? null
                           : () => _removeKey(context),
@@ -66,15 +68,73 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SectionCard(
-          title: 'Model',
+          title: 'Your teacher',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               DropdownButtonFormField<String>(
-                value: SettingsProvider.availableModels
-                        .contains(settings.model)
-                    ? settings.model
-                    : SettingsProvider.defaultModel,
+                value: settings.teacherId,
+                isExpanded: true,
+                items: kTeachers
+                    .map(
+                      (t) => DropdownMenuItem(
+                        value: t.id,
+                        child: Text('${t.name}  ·  ${t.specialty}'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) settings.setTeacherId(value);
+                },
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${teacher.name} — ${teacher.tagline}. This teacher runs your '
+                'live classes and role-plays, with the voice "${teacher.voiceName}".',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        SectionCard(
+          title: 'Live voice model',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<String>(
+                value: SettingsProvider.liveModels.contains(settings.liveModel)
+                    ? settings.liveModel
+                    : SettingsProvider.defaultLiveModel,
+                isExpanded: true,
+                items: SettingsProvider.liveModels
+                    .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) settings.setLiveModel(value);
+                },
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Used for the real-time voice classes (Gemini Live API).',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        SectionCard(
+          title: 'Text model',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<String>(
+                value:
+                    SettingsProvider.availableModels.contains(settings.model)
+                        ? settings.model
+                        : SettingsProvider.defaultModel,
                 isExpanded: true,
                 items: SettingsProvider.availableModels
                     .map((m) => DropdownMenuItem(value: m, child: Text(m)))
@@ -85,8 +145,8 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'The "-latest" aliases always point at the newest model, so they '
-                'keep working even as older model names are retired.',
+                'Used for lessons, quizzes and grammar. The "-latest" aliases '
+                'always point at the newest model.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
@@ -165,12 +225,20 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: 16),
         SectionCard(
           title: 'About',
-          child: Text(
-            'LinguaCoach AI v1.0.1\n'
-            'A Duolingo-style language-learning app powered by the Google '
-            'Gemini API. All calls go directly from your device to Gemini — '
-            'there is no backend and nothing is sent to the developer.',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(child: AppLogo(size: 72, showShadow: true)),
+              const SizedBox(height: 12),
+              Text(
+                'LinguaCoach AI v1.2.0\n'
+                'A Duolingo-style language-learning app powered by the Google '
+                'Gemini API — including real-time voice classes with animated '
+                'AI teachers. All calls go directly from your device to Gemini; '
+                'there is no backend.',
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+              ),
+            ],
           ),
         ),
       ],
@@ -221,8 +289,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               actions: [
                 TextButton(
-                  onPressed:
-                      busy ? null : () => Navigator.pop(dialogContext),
+                  onPressed: busy ? null : () => Navigator.pop(dialogContext),
                   child: const Text('Cancel'),
                 ),
                 FilledButton(

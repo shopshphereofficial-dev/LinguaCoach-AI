@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/settings_provider.dart';
 import '../services/gemini_service.dart';
+import '../widgets/app_logo.dart';
 
 /// First-launch screen: the learner pastes their own Gemini API key.
 /// It is validated with a tiny test call, then stored in secure storage.
@@ -66,18 +67,8 @@ class _ApiKeyScreenState extends State<ApiKeyScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Center(
-                        child: Text('🦜', style: TextStyle(fontSize: 44)),
-                      ),
-                    ),
+                  const Center(
+                    child: AppLogo(size: 104, showShadow: true),
                   ),
                   const SizedBox(height: 20),
                   Text(

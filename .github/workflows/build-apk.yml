@@ -38,7 +38,7 @@ jobs:
             --project-name lingua_coach_ai /tmp/scaffold
           cp -r /tmp/scaffold/android ./android
 
-      - name: Patch AndroidManifest and Gradle (permissions, minSdk, label)
+      - name: Patch Android project (permissions, minSdk, label, icons)
         run: python3 .github/scripts/patch_android.py
 
       - name: Install dependencies
@@ -65,18 +65,19 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
-      - name: Publish APK to the v1.0.1 release
+      - name: Publish APK to the v1.2.0 release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.1
-          name: LinguaCoach AI v1.0.1
+          tag_name: v1.2.0
+          name: LinguaCoach AI v1.2.0
           body: |
             Automatic build of the LinguaCoach AI release APK.
 
             Download `app-release.apk` below and install it on your Android
             device (you may need to allow "Install unknown apps").
 
-            This build ships with the API key already configured, so there is
-            no setup screen.
+            v1.2.0 adds **real-time live voice classes** with five animated AI
+            teachers (lip sync, blinking and hair motion), a new logo, and the
+            latest working Gemini models.
           files: build/app/outputs/flutter-apk/app-release.apk

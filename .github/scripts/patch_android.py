@@ -8,6 +8,7 @@ script adds what the app needs on top of the default template:
   * <queries> entries so speech recognition and TTS are visible on Android 11+
   * a friendly app label
   * minSdkVersion 21
+  * the app's own launcher icons
 
 It is written to be idempotent and to fail loudly if the expected files are
 missing.
@@ -15,16 +16,20 @@ missing.
 
 import pathlib
 import re
+import shutil
 import sys
 
 MANIFEST = pathlib.Path("android/app/src/main/AndroidManifest.xml")
 GRADLE = pathlib.Path("android/app/build.gradle")
+RES_DIR = pathlib.Path("android/app/src/main/res")
+ICON_SOURCE = pathlib.Path("assets/icon")
 
 PERMISSIONS = """
     <!-- Added for LinguaCoach AI: network access for Gemini + microphone for
-         speech recognition. -->
+         live voice classes and speech recognition. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 """
@@ -79,7 +84,40 @@ def patch_gradle() -> None:
     print("Patched", GRADLE)
 
 
+def patch_icons() -> None:
+    """Copy the app's launcher icons over the Flutter default ones."""
+    if not ICON_SOURCE.exists():
+        print("No icon assets found; keeping the default launcher icon.")
+        return
+    if not RES_DIR.exists():
+        sys.exit(f"ERROR: {RES_DIR} not found")
+
+    copied = 0
+    for density_dir in sorted(ICON_SOURCE.glob("mipmap-*")):
+        icon = density_dir / "ic_launcher.png"
+        if not icon.exists():
+            continue
+        target_dir = RES_DIR / density_dir.name
+        target_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(icon, target_dir / "ic_launcher.png")
+        copied += 1
+
+    # Round icon, if the template references one.
+    base = ICON_SOURCE / "mipmap-xxxhdpi" / "ic_launcher.png"
+    if base.exists():
+        for density_dir in sorted(RES_DIR.glob("mipmap-*")):
+            rounded = density_dir / "ic_launcher_round.png"
+            if rounded.exists():
+                shutil.copyfile(
+                    ICON_SOURCE / density_dir.name / "ic_launcher.png", rounded
+                )
+                copied += 1
+
+    print(f"Replaced {copied} launcher icon file(s).")
+
+
 if __name__ == "__main__":
     patch_manifest()
     patch_gradle()
+    patch_icons()
     print("Android project patched successfully.")
