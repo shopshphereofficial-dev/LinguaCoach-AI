@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/curriculum.dart';
 import '../models/language.dart';
+import '../models/quiz_question.dart';
 import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
