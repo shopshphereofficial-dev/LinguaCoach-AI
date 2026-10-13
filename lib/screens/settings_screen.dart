@@ -231,7 +231,7 @@ class SettingsScreen extends StatelessWidget {
               const Center(child: AppLogo(size: 72, showShadow: true)),
               const SizedBox(height: 12),
               Text(
-                'LinguaCoach AI v1.2.0\n'
+                'LinguaCoach AI v1.3.0\n'
                 'A Duolingo-style language-learning app powered by the Google '
                 'Gemini API — including real-time voice classes with animated '
                 'AI teachers. All calls go directly from your device to Gemini; '

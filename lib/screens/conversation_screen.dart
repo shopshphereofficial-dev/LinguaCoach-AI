@@ -3,12 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../models/chat_message.dart';
 import '../models/language.dart';
+import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/gemini_service.dart';
 import '../services/speech_service.dart';
 import '../widgets/chat_widgets.dart';
 import '../widgets/common.dart';
+import '../widgets/teacher_avatar.dart';
+import 'live_class_screen.dart';
 
 /// 1. AI Conversation Coach — a chat with a tutor that corrects the learner
 /// after every message.
@@ -173,8 +176,34 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.language.flag} Tutor · ${widget.level.label}'),
+        title: Row(
+          children: [
+            TeacherAvatar(
+              teacher: teacherById(context.read<SettingsProvider>().teacherId),
+              animate: false,
+              size: 30,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                '${widget.language.flag} Text chat · ${widget.level.label}',
+              ),
+            ),
+          ],
+        ),
         actions: [
+          IconButton(
+            tooltip: 'Go live with a teacher',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => LiveClassScreen(
+                  language: widget.language,
+                  level: widget.level,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.graphic_eq),
+          ),
           IconButton(
             tooltip: 'Clear chat',
             onPressed: () => setState(() {

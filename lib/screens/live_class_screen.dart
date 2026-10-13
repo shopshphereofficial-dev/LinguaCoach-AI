@@ -37,14 +37,20 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
   final LiveSessionService _live = LiveSessionService();
   final AudioIoService _audio = AudioIoService();
   final ValueNotifier<double> _level = ValueNotifier<double>(0);
-  final TextEditingController _textController = TextEditingController();
 
+  // Transcripts live in notifiers so a new word does not rebuild the whole
+  // screen (and the avatar) on every audio frame.
+  final ValueNotifier<String> _userText = ValueNotifier<String>('');
+  final ValueNotifier<String> _modelText = ValueNotifier<String>('');
+
+  final TextEditingController _textController = TextEditingController();
   final List<StreamSubscription<dynamic>> _subscriptions = [];
 
+  late Language _language;
+  late SkillLevel _level_;
   late Teacher _teacher;
+
   LiveStatus _status = LiveStatus.idle;
-  String _userText = '';
-  String _modelText = '';
   String? _error;
   bool _speaking = false;
   bool _muted = false;
@@ -55,6 +61,8 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
   @override
   void initState() {
     super.initState();
+    _language = widget.language;
+    _level_ = widget.level;
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
@@ -64,10 +72,13 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
     for (final sub in _subscriptions) {
       sub.cancel();
     }
+    _subscriptions.clear();
     _textController.dispose();
     _live.dispose();
     _audio.dispose();
     _level.dispose();
+    _userText.dispose();
+    _modelText.dispose();
     super.dispose();
   }
 
@@ -79,19 +90,19 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
   String get _systemInstruction {
     final t = _teacher;
     return 'You are ${t.name}, a language teacher holding a LIVE spoken '
-        'conversation with a learner who is studying ${widget.language.name} '
-        'at a ${widget.level.label} level. '
+        'conversation with a learner who is studying ${_language.name} '
+        'at a ${_level_.label} level. '
         'Your native language (for any explanation) is $_nativeLanguageName. '
         'Your personality: ${t.personality} '
         'Rules for this live call: '
-        '- Always speak in ${widget.language.name}, at a ${widget.level.label} '
-        'level, in short natural sentences of one to three sentences. '
+        '- Always speak in ${_language.name}, at a ${_level_.label} level, in '
+        'short natural sentences of one to three sentences. '
         '- This is speech, not text: never use markdown, bullet points, emoji '
         'or stage directions. '
         '- When the learner makes a mistake, correct it kindly in one short '
         'sentence, then keep the conversation going with a question. '
         '- If the learner speaks in $_nativeLanguageName, gently encourage them '
-        'to try again in ${widget.language.name}. '
+        'to try again in ${_language.name}. '
         '- Always end your turn with a short question so the learner keeps '
         'talking.';
   }
@@ -101,7 +112,10 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
     setState(() {
       _error = null;
       _status = LiveStatus.connecting;
+      _speaking = false;
     });
+    _userText.value = '';
+    _modelText.value = '';
 
     _subscriptions.addAll([
       _live.status.listen((s) {
@@ -111,21 +125,13 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
       }),
       _live.audioOut.listen(_onAudio),
       _live.modelLevel.listen((v) => _level.value = v),
-      _live.userTranscript.listen((t) {
-        if (mounted) setState(() => _userText = t);
-      }),
-      _live.modelTranscript.listen((t) {
-        if (mounted) setState(() => _modelText = t);
-      }),
+      _live.userTranscript.listen((t) => _userText.value = t),
+      _live.modelTranscript.listen((t) => _modelText.value = t),
       _live.interruptions.listen((_) {
         _audio.flush();
         _level.value = 0;
-        if (mounted) {
-          setState(() {
-            _speaking = false;
-            _modelText = '';
-          });
-        }
+        _modelText.value = '';
+        if (mounted) setState(() => _speaking = false);
       }),
       _live.errors.listen((message) {
         if (mounted) setState(() => _error = message);
@@ -152,11 +158,9 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
       return;
     }
     await _startMic();
-
-    // Kick the teacher off so the class starts by itself.
     _live.sendText(
       '(The learner has just joined the call. Greet them in '
-      '${widget.language.name} and ask one simple question to begin.)',
+      '${_language.name} and ask one simple question to begin.)',
     );
   }
 
@@ -182,23 +186,55 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
     });
   }
 
-  Future<void> _toggleMute() async {
-    final next = !_muted;
-    setState(() => _muted = next);
-    if (next) {
-      _live.sendAudioStreamEnd();
-    }
+  void _toggleMute() {
+    setState(() => _muted = !_muted);
+    if (_muted) _live.sendAudioStreamEnd();
   }
 
   void _sendTyped() {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
     _textController.clear();
-    setState(() {
-      _userText = text;
-      _modelText = '';
-    });
+    _userText.value = text;
+    _modelText.value = '';
     _live.sendText(text);
+  }
+
+  Future<void> _pickLanguage() async {
+    final chosen = await showModalBottomSheet<Language>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        builder: (context, controller) => ListView.builder(
+          controller: controller,
+          itemCount: kLearnableLanguages.length,
+          itemBuilder: (context, index) {
+            final l = kLearnableLanguages[index];
+            return ListTile(
+              leading: Text(l.flag, style: const TextStyle(fontSize: 22)),
+              title: Text(l.name),
+              subtitle: Text(l.nativeName),
+              trailing: l.code == _language.code
+                  ? const Icon(Icons.check_circle)
+                  : null,
+              onTap: () => Navigator.pop(sheetContext, l),
+            );
+          },
+        ),
+      ),
+    );
+    if (chosen == null || chosen.code == _language.code) return;
+    final level = context.read<ProgressProvider>().levelFor(chosen.code);
+    await _endSession(award: false);
+    setState(() {
+      _language = chosen;
+      _level_ = level;
+    });
+    await _start();
   }
 
   Future<void> _pickTeacher() async {
@@ -219,16 +255,8 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
           const SizedBox(height: 12),
           ...kTeachers.map(
             (t) => ListTile(
-              leading: CircleAvatar(
-                backgroundColor: t.accent.withOpacity(0.18),
-                child: Text(
-                  t.name.substring(0, 1),
-                  style: TextStyle(
-                    color: t.accent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
+              contentPadding: EdgeInsets.zero,
+              leading: TeacherAvatar(teacher: t, animate: false, size: 44),
               title: Text('${t.name}  ·  ${t.specialty}'),
               subtitle: Text(t.tagline),
               trailing: t.id == _teacher.id
@@ -254,8 +282,8 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
     _level.value = 0;
     if (award) {
       final progress = context.read<ProgressProvider>();
-      await progress.addXp(widget.language.code, 25);
-      await progress.registerPractice(widget.language.code);
+      await progress.addXp(_language.code, 25);
+      await progress.registerPractice(_language.code);
     }
   }
 
@@ -276,8 +304,13 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('${widget.language.flag} Live class · ${widget.level.label}'),
+          title: Text('Live · ${_level_.label}'),
           actions: [
+            TextButton.icon(
+              onPressed: _pickLanguage,
+              icon: const Icon(Icons.language, size: 18),
+              label: Text('${_language.flag} ${_language.name}'),
+            ),
             IconButton(
               tooltip: 'Change teacher',
               onPressed: _pickTeacher,
@@ -348,24 +381,35 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    if (_modelText.trim().isNotEmpty)
-                      _caption(
-                        context,
-                        icon: Icons.record_voice_over,
-                        color: _teacher.accent,
-                        label: _teacher.name,
-                        text: _modelText,
-                      ),
-                    if (_userText.trim().isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      _caption(
-                        context,
-                        icon: Icons.mic,
-                        color: theme.colorScheme.primary,
-                        label: 'You',
-                        text: _userText,
-                      ),
-                    ],
+                    ValueListenableBuilder<String>(
+                      valueListenable: _modelText,
+                      builder: (context, text, _) {
+                        if (text.trim().isEmpty) return const SizedBox.shrink();
+                        return _caption(
+                          context,
+                          icon: Icons.record_voice_over,
+                          color: _teacher.accent,
+                          label: _teacher.name,
+                          text: text,
+                        );
+                      },
+                    ),
+                    ValueListenableBuilder<String>(
+                      valueListenable: _userText,
+                      builder: (context, text, _) {
+                        if (text.trim().isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: _caption(
+                            context,
+                            icon: Icons.mic,
+                            color: theme.colorScheme.primary,
+                            label: 'You',
+                            text: text,
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -380,7 +424,7 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
                           textInputAction: TextInputAction.send,
                           onSubmitted: (_) => _sendTyped(),
                           decoration: InputDecoration(
-                            hintText: 'Type in ${widget.language.name}…',
+                            hintText: 'Type in ${_language.name}…',
                           ),
                         ),
                       ),
@@ -493,9 +537,8 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
                 onPressed: _micRunning ? _toggleMute : _startMic,
                 icon: Icon(_muted ? Icons.mic_off : Icons.mic),
                 style: IconButton.styleFrom(
-                  backgroundColor: _muted
-                      ? theme.colorScheme.errorContainer
-                      : null,
+                  backgroundColor:
+                      _muted ? theme.colorScheme.errorContainer : null,
                 ),
               ),
               const SizedBox(height: 4),

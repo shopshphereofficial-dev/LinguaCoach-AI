@@ -6,6 +6,7 @@ import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/common.dart';
+import '../widgets/teacher_avatar.dart';
 import 'conversation_screen.dart';
 import 'daily_practice_screen.dart';
 import 'exercises_screen.dart';
@@ -55,14 +56,10 @@ class LanguageDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
                 child: Row(
                   children: [
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: teacher.accent.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(Icons.graphic_eq, color: teacher.accent),
+                    TeacherAvatar(
+                      teacher: teacher,
+                      animate: false,
+                      size: 56,
                     ),
                     const SizedBox(width: 14),
                     Expanded(

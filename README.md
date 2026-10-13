@@ -4,9 +4,13 @@ A Duolingo-style **multi-language learning app for Android**, built with
 **Flutter** and powered directly by the **Google Gemini API**. There is no
 backend — every request goes straight from your device to Gemini.
 
-**New in v1.2.0 — real-time live classes.** Instead of tapping a mic and waiting,
-you now hold a genuine live voice conversation with an animated AI teacher who
-answers instantly, can be interrupted, and lip-syncs to their own voice.
+**New in v1.3.0 — real-time live classes with visible characters.** Instead of
+tapping a mic and waiting, you now hold a genuine live voice conversation with
+an animated AI teacher who answers instantly, can be interrupted, and lip-syncs
+to their own voice. The drawn characters now appear **everywhere** — the Home
+hero card, the teacher strip, the Practice tab, the teacher picker and the chat
+header — not just as initials. A prominent *“Talk live with …”* card on Home
+takes you straight into a class (pick the language, then just speak).
 
 ---
 

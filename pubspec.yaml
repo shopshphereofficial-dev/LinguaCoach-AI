@@ -1,7 +1,7 @@
 name: lingua_coach_ai
 description: "LinguaCoach AI - a Duolingo-style multi-language learning app powered by the Google Gemini API."
 publish_to: "none"
-version: 1.2.0+3
+version: 1.3.0+4
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/language.dart';
+import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/gemini_service.dart';
 import '../services/speech_service.dart';
 import '../widgets/common.dart';
+import '../widgets/teacher_avatar.dart';
 import 'daily_practice_screen.dart';
 import 'exercises_screen.dart';
 import 'grammar_screen.dart';
+import 'live_class_screen.dart';
 import 'roleplay_screen.dart';
 import 'speaking_screen.dart';
 
-/// The Practice tab: a daily-practice hub with quick access to the other
-/// practice modes, for a language you choose.
+/// The Practice tab: the live class first, then a daily-practice hub and quick
+/// access to the other practice modes.
 class PracticeTab extends StatefulWidget {
   const PracticeTab({super.key});
 
@@ -46,6 +49,8 @@ class _PracticeTabState extends State<PracticeTab> {
   SkillLevel get _level => context.read<ProgressProvider>().levelFor(_code);
   String get _nativeName =>
       languageByCode(context.read<SettingsProvider>().nativeLanguage).name;
+  Teacher get _teacher =>
+      teacherById(context.read<SettingsProvider>().teacherId);
 
   Future<void> _loadDaily() async {
     if (_code.isEmpty) return;
@@ -81,6 +86,45 @@ class _PracticeTabState extends State<PracticeTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // ------------------------------------------------------- live class
+        Card(
+          color: _teacher.accent.withOpacity(0.14),
+          child: InkWell(
+            onTap: () =>
+                _open(LiveClassScreen(language: _language, level: _level)),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  TeacherAvatar(teacher: _teacher, animate: false, size: 58),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Live class with ${_teacher.name}',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Talk in real time in ${_language.name} — no waiting.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
         Text(
           'Practise a language',
           style:
@@ -138,7 +182,7 @@ class _PracticeTabState extends State<PracticeTab> {
         FeatureTile(
           icon: Icons.mic_none,
           title: 'Speaking Practice',
-          subtitle: 'Speak on a topic and get a score',
+          subtitle: 'Speak on a topic and get a score out of 10',
           color: Colors.blue,
           onTap: () => _open(SpeakingScreen(language: _language, level: _level)),
         ),

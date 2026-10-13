@@ -50,11 +50,15 @@ jobs:
       # The Gemini API key is injected here from the repository secret, so it is
       # baked into the APK but never stored in the source code. Secrets are
       # masked in the logs.
+      #
+      # --target-platform keeps only the two ABIs real phones use, which cuts
+      # roughly 30% off the APK size (the x86 images are emulator-only).
       - name: Build release APK
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           flutter build apk --release \
+            --target-platform android-arm,android-arm64 \
             --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY" \
             --dart-define=GEMINI_MODEL=gemini-flash-latest
 
@@ -65,19 +69,21 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
-      - name: Publish APK to the v1.2.0 release
+      - name: Publish APK to the v1.3.0 release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
-          name: LinguaCoach AI v1.2.0
+          tag_name: v1.3.0
+          name: LinguaCoach AI v1.3.0
           body: |
             Automatic build of the LinguaCoach AI release APK.
 
             Download `app-release.apk` below and install it on your Android
             device (you may need to allow "Install unknown apps").
 
-            v1.2.0 adds **real-time live voice classes** with five animated AI
-            teachers (lip sync, blinking and hair motion), a new logo, and the
-            latest working Gemini models.
+            v1.3.0: the drawn teacher characters now appear across the app
+            (home, teacher picker, practice, chat), a prominent "talk live"
+            entry on Home, per-frame lip sync with a redesigned, better
+            proportioned avatar, a language switcher inside the live class, and
+            a ~30% smaller APK.
           files: build/app/outputs/flutter-apk/app-release.apk
