@@ -77,13 +77,30 @@ def patch_gradle() -> None:
     if not GRADLE.exists():
         sys.exit(f"ERROR: {GRADLE} not found")
 
-    text = GRADLE.read_text(encoding="utf-8")
+    original = GRADLE.read_text(encoding="utf-8")
+    text = original
+
     # record_android (used for the live-class microphone) requires API 23.
-    if "minSdkVersion 23" not in text:
-        text = text.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 23")
-        text = text.replace("minSdkVersion 21", "minSdkVersion 23")
+    # Flutter templates use either `minSdk = flutter.minSdkVersion` (newer) or
+    # `minSdkVersion flutter.minSdkVersion` (older), so cover both.
+    text = re.sub(r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 23", text)
+    text = re.sub(
+        r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 23", text
+    )
+    text = re.sub(r"minSdkVersion\s+21\b", "minSdkVersion 23", text)
+    text = re.sub(r"minSdk\s*=\s*21\b", "minSdk = 23", text)
+
     GRADLE.write_text(text, encoding="utf-8")
-    print("Patched", GRADLE)
+
+    # Echo the result so a mismatch is obvious in the CI log.
+    print("--- minSdk lines in build.gradle ---")
+    for line in text.splitlines():
+        if "minSdk" in line:
+            print("   ", line.strip())
+    if text == original:
+        print("WARNING: no minSdk line was changed; check the template syntax.")
+    else:
+        print("Patched", GRADLE)
 
 
 def patch_icons() -> None:
