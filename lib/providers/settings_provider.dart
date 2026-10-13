@@ -1,23 +1,38 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_config.dart';
 import '../services/storage_service.dart';
 
 /// Holds user preferences: the Gemini API key, model, native language and
 /// theme. Persisted through [StorageService].
+///
+/// The API key comes from one of two places, in order of priority:
+///
+///  1. A key the user pasted themselves (kept in secure storage).
+///  2. The key baked into the build at compile time
+///     (`--dart-define=GEMINI_API_KEY=...`).
+///
+/// Because a key is normally built in, the app opens straight into the home
+/// screen and never asks the user to paste one.
 class SettingsProvider extends ChangeNotifier {
   final StorageService _storage;
 
   SettingsProvider(this._storage);
 
-  /// Models offered in Settings. The first is the default.
+  /// Models verified against the live Gemini API. The `-latest` aliases track
+  /// the newest version automatically, so they keep working over time.
   static const List<String> availableModels = <String>[
-    'gemini-2.5-flash',
-    'gemini-2.5-pro',
-    'gemini-2.5-flash-lite',
-    'gemini-2.0-flash',
+    'gemini-flash-latest',
+    'gemini-pro-latest',
+    'gemini-flash-lite-latest',
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
   ];
 
-  static const String defaultModel = 'gemini-2.5-flash';
+  static const String defaultModel = AppConfig.defaultModel;
   static const String defaultNativeLanguage = 'hi';
 
   String? _apiKey;
@@ -25,8 +40,22 @@ class SettingsProvider extends ChangeNotifier {
   String _nativeLanguage = defaultNativeLanguage;
   ThemeMode _themeMode = ThemeMode.system;
 
-  String get apiKey => _apiKey ?? '';
-  bool get hasApiKey => (_apiKey ?? '').trim().isNotEmpty;
+  /// The key actually used for requests: the user's own key if they set one,
+  /// otherwise the key baked into the build.
+  String get apiKey {
+    final stored = (_apiKey ?? '').trim();
+    if (stored.isNotEmpty) return stored;
+    return AppConfig.builtInApiKey.trim();
+  }
+
+  bool get hasApiKey => apiKey.isNotEmpty;
+
+  /// True when the user has not supplied their own key and the built-in key is
+  /// the one being used.
+  bool get usingBuiltInKey =>
+      (_apiKey ?? '').trim().isEmpty &&
+      AppConfig.builtInApiKey.trim().isNotEmpty;
+
   String get model => _model;
   String get nativeLanguage => _nativeLanguage;
   ThemeMode get themeMode => _themeMode;
@@ -40,12 +69,14 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Stores a personal key, which takes priority over the built-in one.
   Future<void> setApiKey(String key) async {
     _apiKey = key.trim();
     await _storage.writeApiKey(_apiKey!);
     notifyListeners();
   }
 
+  /// Removes the personal key; the built-in key (if any) takes over again.
   Future<void> clearApiKey() async {
     _apiKey = null;
     await _storage.deleteApiKey();

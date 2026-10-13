@@ -2,8 +2,7 @@
 
 A Duolingo-style **multi-language learning app for Android**, built with
 **Flutter** and powered directly by the **Google Gemini API**. There is no
-backend — every request goes straight from your device to Gemini using your own
-API key.
+backend — every request goes straight from your device to Gemini.
 
 ---
 
@@ -34,9 +33,46 @@ Plus:
 - **Material 3** design with light/dark mode and a colourful Duolingo-like look.
 - **Bottom navigation** — Home, Practice, Progress, Settings.
 - **40+ languages** to learn and 16 native languages for explanations.
-- **Your own API key** — entered on first launch, stored with
-  `flutter_secure_storage`, validated with a test call, and changeable in
-  Settings.
+
+---
+
+## 🔑 API key configuration
+
+The app ships **with the API key already configured**, so there is no setup
+screen on first launch. The key is not written in the source code; it is
+injected at compile time from a repository secret:
+
+```
+flutter build apk --release --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
+```
+
+In CI this comes from the **`GEMINI_API_KEY`** repository secret
+(*Settings → Secrets and variables → Actions*). To rotate the key, update that
+secret and re-run the workflow — nothing else changes.
+
+The app also lets a user paste **their own** key in *Settings*; that personal
+key takes priority over the built-in one and is stored with
+`flutter_secure_storage`. Removing it falls back to the built-in key. In the UI
+the key is always shown masked.
+
+> **Note on security.** Anything embedded in a client app can be extracted from
+> the APK. For production, put the key behind a small backend/proxy (or a
+> Cloud Function) instead of shipping it in the app.
+
+### Available models
+
+Only models that currently respond are listed (verified against the live API):
+
+| Model | Notes |
+| --- | --- |
+| `gemini-flash-latest` | **default** — always the newest Flash |
+| `gemini-pro-latest` | most capable |
+| `gemini-flash-lite-latest` | fastest / cheapest |
+| `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash` | pinned Flash versions |
+| `gemini-3.1-flash-lite` | pinned Lite version |
+
+Older names such as `gemini-2.5-flash` and `gemini-2.0-flash` now return
+`404 … no longer available to new users`, which is why they are not offered.
 
 ---
 
@@ -46,8 +82,8 @@ This repository builds the APK automatically with **GitHub Actions**.
 
 1. Go to the **Actions** tab → **Build Android APK** → open the latest run.
 2. Download the **`lingua-coach-apk`** artifact, **or**
-3. Go to the **Releases** page and download `app-release.apk` from
-   **LinguaCoach AI v1.0.0**.
+3. Go to the **Releases** page and download `app-release.apk` from the latest
+   release.
 
 Then copy the APK to your phone and install it (you may need to allow
 *Install unknown apps* for your file manager / browser).
@@ -76,31 +112,20 @@ python3 .github/scripts/patch_android.py   # adds permissions + minSdk 21
 # 3. Install packages
 flutter pub get
 
-# 4. Run on a connected device / emulator
-flutter run
+# 4. Run on a connected device / emulator (pass your own key)
+flutter run --dart-define=GEMINI_API_KEY="YOUR_KEY"
 
 # 5. Build a release APK
-flutter build apk --release
+flutter build apk --release --dart-define=GEMINI_API_KEY="YOUR_KEY"
 # -> build/app/outputs/flutter-apk/app-release.apk
 ```
+
+If you build **without** `--dart-define=GEMINI_API_KEY`, the app falls back to
+a welcome screen that asks for a key — useful for development.
 
 > The `patch_android.py` script adds the `INTERNET` and `RECORD_AUDIO`
 > permissions, the speech-recognition/TTS `<queries>` entries needed on
 > Android 11+, the app label and `minSdkVersion 21`.
-
----
-
-## 🔑 Getting a Gemini API key
-
-1. Open **Google AI Studio** — <https://aistudio.google.com>.
-2. Sign in and click **Get API key**.
-3. Create a key and paste it into the app's welcome screen.
-
-The default model is **`gemini-2.5-flash`**; you can switch to
-`gemini-2.5-pro`, `gemini-2.5-flash-lite` or `gemini-2.0-flash` in Settings.
-
-Your key is stored **only on your device** and is never committed or sent
-anywhere except Google's API.
 
 ---
 
@@ -109,6 +134,7 @@ anywhere except Google's API.
 ```
 lib/
 ├── main.dart                     # app entry + provider wiring
+├── config/app_config.dart        # build-time API key / model
 ├── models/                       # Language, ChatMessage, QuizQuestion, Lesson,
 │                                 # RolePlayScenario, UserProgress, Achievement
 ├── services/
@@ -118,23 +144,7 @@ lib/
 ├── providers/
 │   ├── settings_provider.dart    # API key, model, native language, theme
 │   └── progress_provider.dart    # XP, streak, levels, achievements
-├── screens/
-│   ├── api_key_screen.dart       # first-launch onboarding
-│   ├── home_shell.dart           # bottom navigation
-│   ├── home_tab.dart             # language grid
-│   ├── language_detail_screen.dart
-│   ├── conversation_screen.dart  # 1. AI Conversation Coach
-│   ├── speaking_screen.dart      # 2. Speaking Practice
-│   ├── lessons_screen.dart       # 3. Lessons
-│   ├── lesson_detail_screen.dart
-│   ├── exercises_screen.dart     # 4. Exercises
-│   ├── grammar_screen.dart       # 5. Grammar Correction
-│   ├── daily_practice_screen.dart# 6. Daily Practice
-│   ├── roleplay_screen.dart      # 7. Role-play
-│   ├── roleplay_chat_screen.dart
-│   ├── practice_tab.dart
-│   ├── progress_screen.dart
-│   └── settings_screen.dart
+├── screens/                      # 16 screens, one per feature + shell/tabs
 ├── widgets/                      # reusable UI pieces
 └── theme/app_theme.dart          # Material 3 light/dark theme
 ```

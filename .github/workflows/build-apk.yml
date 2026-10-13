@@ -47,8 +47,16 @@ jobs:
       - name: Analyze (informational, does not fail the build)
         run: flutter analyze || true
 
+      # The Gemini API key is injected here from the repository secret, so it is
+      # baked into the APK but never stored in the source code. Secrets are
+      # masked in the logs.
       - name: Build release APK
-        run: flutter build apk --release
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          flutter build apk --release \
+            --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY" \
+            --dart-define=GEMINI_MODEL=gemini-flash-latest
 
       - name: Upload APK as a build artifact
         uses: actions/upload-artifact@v4
@@ -57,15 +65,18 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
-      - name: Publish APK to the v1.0.0 release
+      - name: Publish APK to the v1.0.1 release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: LinguaCoach AI v1.0.0
+          tag_name: v1.0.1
+          name: LinguaCoach AI v1.0.1
           body: |
             Automatic build of the LinguaCoach AI release APK.
 
             Download `app-release.apk` below and install it on your Android
             device (you may need to allow "Install unknown apps").
+
+            This build ships with the API key already configured, so there is
+            no setup screen.
           files: build/app/outputs/flutter-apk/app-release.apk

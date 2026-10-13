@@ -31,7 +31,10 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Stored securely on this device only.',
+                settings.usingBuiltInKey
+                    ? 'The built-in key is in use. Paste your own key below to '
+                        'override it.'
+                    : 'Your own key is stored securely on this device.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
@@ -48,7 +51,10 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _removeKey(context),
+                      // Nothing to remove while the built-in key is in use.
+                      onPressed: settings.usingBuiltInKey
+                          ? null
+                          : () => _removeKey(context),
                       icon: const Icon(Icons.delete_outline, size: 18),
                       label: const Text('Remove'),
                     ),
@@ -65,7 +71,10 @@ class SettingsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               DropdownButtonFormField<String>(
-                value: settings.model,
+                value: SettingsProvider.availableModels
+                        .contains(settings.model)
+                    ? settings.model
+                    : SettingsProvider.defaultModel,
                 isExpanded: true,
                 items: SettingsProvider.availableModels
                     .map((m) => DropdownMenuItem(value: m, child: Text(m)))
@@ -76,8 +85,8 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'gemini-2.5-flash is fast and cheap; gemini-2.5-pro is smarter '
-                'but slower.',
+                'The "-latest" aliases always point at the newest model, so they '
+                'keep working even as older model names are retired.',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
@@ -157,7 +166,7 @@ class SettingsScreen extends StatelessWidget {
         SectionCard(
           title: 'About',
           child: Text(
-            'LinguaCoach AI v1.0.0\n'
+            'LinguaCoach AI v1.0.1\n'
             'A Duolingo-style language-learning app powered by the Google '
             'Gemini API. All calls go directly from your device to Gemini — '
             'there is no backend and nothing is sent to the developer.',
@@ -187,7 +196,7 @@ class SettingsScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: const Text('Update API key'),
+              title: const Text('Use your own API key'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -196,7 +205,7 @@ class SettingsScreen extends StatelessWidget {
                     obscureText: true,
                     autocorrect: false,
                     decoration: const InputDecoration(
-                      hintText: 'Paste a new Gemini API key',
+                      hintText: 'Paste a Gemini API key',
                     ),
                   ),
                   if (error != null) ...[
@@ -271,10 +280,10 @@ class SettingsScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove API key?'),
+        title: const Text('Remove your key?'),
         content: const Text(
-          'You will be returned to the welcome screen and will need to paste '
-          'a key again to use the app.',
+          'Your key will be deleted from this device and the built-in key will '
+          'be used again.',
         ),
         actions: [
           TextButton(
