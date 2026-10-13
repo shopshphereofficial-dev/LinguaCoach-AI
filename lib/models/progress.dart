@@ -16,6 +16,13 @@ class UserProgress {
   /// Unlocked achievement ids.
   List<String> achievements;
 
+  /// Stars (0-3) earned per lesson, keyed 'langCode|lessonId'.
+  Map<String, int> lessonStars;
+
+  /// XP earned today, plus the day it belongs to.
+  int todayXp;
+  String? todayDay;
+
   UserProgress({
     this.xp = 0,
     this.streak = 0,
@@ -23,9 +30,13 @@ class UserProgress {
     Map<String, int>? languageXp,
     Map<String, String>? languageLevel,
     List<String>? achievements,
+    Map<String, int>? lessonStars,
+    this.todayXp = 0,
+    this.todayDay,
   })  : languageXp = languageXp ?? <String, int>{},
         languageLevel = languageLevel ?? <String, String>{},
-        achievements = achievements ?? <String>[];
+        achievements = achievements ?? <String>[],
+        lessonStars = lessonStars ?? <String, int>{};
 
   factory UserProgress.empty() => UserProgress();
 
@@ -42,23 +53,24 @@ class UserProgress {
         'languageXp': languageXp,
         'languageLevel': languageLevel,
         'achievements': achievements,
+        'lessonStars': lessonStars,
+        'todayXp': todayXp,
+        'todayDay': todayDay,
       };
 
   factory UserProgress.fromJson(Map<String, dynamic> json) {
-    final langXp = <String, int>{};
-    final rawXp = json['languageXp'];
-    if (rawXp is Map) {
-      rawXp.forEach((key, value) {
-        langXp[key.toString()] = int.tryParse(value.toString()) ?? 0;
-      });
+    Map<String, int> intMap(dynamic raw) {
+      final out = <String, int>{};
+      if (raw is Map) {
+        raw.forEach((k, v) => out[k.toString()] = int.tryParse('$v') ?? 0);
+      }
+      return out;
     }
 
     final langLevel = <String, String>{};
     final rawLevel = json['languageLevel'];
     if (rawLevel is Map) {
-      rawLevel.forEach((key, value) {
-        langLevel[key.toString()] = value.toString();
-      });
+      rawLevel.forEach((k, v) => langLevel[k.toString()] = v.toString());
     }
 
     final achievements = <String>[];
@@ -73,9 +85,12 @@ class UserProgress {
       xp: int.tryParse('${json['xp']}') ?? 0,
       streak: int.tryParse('${json['streak']}') ?? 0,
       lastPracticeDay: json['lastPracticeDay']?.toString(),
-      languageXp: langXp,
+      languageXp: intMap(json['languageXp']),
       languageLevel: langLevel,
       achievements: achievements,
+      lessonStars: intMap(json['lessonStars']),
+      todayXp: int.tryParse('${json['todayXp']}') ?? 0,
+      todayDay: json['todayDay']?.toString(),
     );
   }
 }

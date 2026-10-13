@@ -41,12 +41,18 @@ class SettingsProvider extends ChangeNotifier {
   static const String defaultLiveModel = 'gemini-3.8-live';
   static const String defaultNativeLanguage = 'hi';
   static const String defaultTeacherId = 'aanya';
+  static const int defaultDailyGoal = 30;
+
+  /// XP targets offered in Settings.
+  static const List<int> dailyGoals = <int>[20, 30, 50, 100];
 
   String? _apiKey;
   String _model = defaultModel;
   String _liveModel = defaultLiveModel;
   String _nativeLanguage = defaultNativeLanguage;
   String _teacherId = defaultTeacherId;
+  int _dailyGoal = defaultDailyGoal;
+  bool _soundEnabled = true;
   ThemeMode _themeMode = ThemeMode.system;
 
   /// The key actually used for requests: the user's own key if they set one,
@@ -69,6 +75,8 @@ class SettingsProvider extends ChangeNotifier {
   String get liveModel => _liveModel;
   String get nativeLanguage => _nativeLanguage;
   String get teacherId => _teacherId;
+  int get dailyGoal => _dailyGoal;
+  bool get soundEnabled => _soundEnabled;
   ThemeMode get themeMode => _themeMode;
 
   Future<void> load() async {
@@ -78,6 +86,11 @@ class SettingsProvider extends ChangeNotifier {
     _nativeLanguage =
         await _storage.readSetting('nativeLanguage') ?? defaultNativeLanguage;
     _teacherId = await _storage.readSetting('teacherId') ?? defaultTeacherId;
+    _dailyGoal = int.tryParse(
+            await _storage.readSetting('dailyGoal') ?? '') ??
+        defaultDailyGoal;
+    _soundEnabled =
+        (await _storage.readSetting('soundEnabled') ?? 'true') == 'true';
     _themeMode = _themeFromString(await _storage.readSetting('themeMode'));
     notifyListeners();
   }
@@ -117,6 +130,18 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setTeacherId(String id) async {
     _teacherId = id;
     await _storage.writeSetting('teacherId', id);
+    notifyListeners();
+  }
+
+  Future<void> setDailyGoal(int xp) async {
+    _dailyGoal = xp;
+    await _storage.writeSetting('dailyGoal', '$xp');
+    notifyListeners();
+  }
+
+  Future<void> setSoundEnabled(bool value) async {
+    _soundEnabled = value;
+    await _storage.writeSetting('soundEnabled', value ? 'true' : 'false');
     notifyListeners();
   }
 

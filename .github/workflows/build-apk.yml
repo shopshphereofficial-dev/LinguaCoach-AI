@@ -69,12 +69,12 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
-      - name: Publish APK to the v1.3.0 release
+      - name: Publish APK to the v2.0.0 release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.0
-          name: LinguaCoach AI v1.3.0
+          tag_name: v2.0.0
+          name: LinguaCoach AI v2.0.0
           body: |
             Automatic build of the LinguaCoach AI release APK.
 

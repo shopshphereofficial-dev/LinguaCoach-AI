@@ -17,6 +17,10 @@ class Teacher {
 
   final Color skin;
   final Color hair;
+
+  /// A lighter shade of the hair, used for the sheen/highlight.
+  final Color hairLight;
+
   final Color outfit;
   final Color accent;
   final HairStyle hairStyle;
@@ -33,6 +37,7 @@ class Teacher {
     required this.voiceName,
     required this.skin,
     required this.hair,
+    required this.hairLight,
     required this.outfit,
     required this.accent,
     required this.hairStyle,
@@ -48,10 +53,11 @@ const List<Teacher> kTeachers = <Teacher>[
     tagline: 'Warm & encouraging',
     specialty: 'Hindi · English',
     voiceName: 'Aoede',
-    skin: Color(0xFFE8B48C),
-    hair: Color(0xFF2B1B12),
+    skin: Color(0xFFEFC3A1),
+    hair: Color(0xFF2A1A12),
+    hairLight: Color(0xFF4A3122),
     outfit: Color(0xFF58CC02),
-    accent: Color(0xFF58CC02),
+    accent: Color(0xFF4FB82A),
     hairStyle: HairStyle.long,
     personality:
         'warm, patient and encouraging. You celebrate small wins and always '
@@ -63,8 +69,9 @@ const List<Teacher> kTeachers = <Teacher>[
     tagline: 'Energetic & fun',
     specialty: 'Spanish · Italian',
     voiceName: 'Puck',
-    skin: Color(0xFFE3A87A),
-    hair: Color(0xFF3B2314),
+    skin: Color(0xFFE7B48A),
+    hair: Color(0xFF3A2416),
+    hairLight: Color(0xFF5C3B24),
     outfit: Color(0xFFFF9600),
     accent: Color(0xFFFF9600),
     hairStyle: HairStyle.short,
@@ -78,8 +85,9 @@ const List<Teacher> kTeachers = <Teacher>[
     tagline: 'Calm & precise',
     specialty: 'Japanese · Korean',
     voiceName: 'Kore',
-    skin: Color(0xFFF2CFAE),
-    hair: Color(0xFF14110F),
+    skin: Color(0xFFF5D6B8),
+    hair: Color(0xFF191413),
+    hairLight: Color(0xFF3A2E2C),
     outfit: Color(0xFF1CB0F6),
     accent: Color(0xFF1CB0F6),
     hairStyle: HairStyle.bob,
@@ -93,8 +101,9 @@ const List<Teacher> kTeachers = <Teacher>[
     tagline: 'Friendly & expressive',
     specialty: 'Arabic · French',
     voiceName: 'Leda',
-    skin: Color(0xFFD9A26F),
-    hair: Color(0xFF1E1410),
+    skin: Color(0xFFDCA874),
+    hair: Color(0xFF241812),
+    hairLight: Color(0xFF4A3226),
     outfit: Color(0xFFCE82FF),
     accent: Color(0xFFCE82FF),
     hairStyle: HairStyle.curly,
@@ -108,8 +117,9 @@ const List<Teacher> kTeachers = <Teacher>[
     tagline: 'Cheerful & clear',
     specialty: 'Portuguese · German',
     voiceName: 'Zephyr',
-    skin: Color(0xFFF0C49B),
-    hair: Color(0xFF7A4A21),
+    skin: Color(0xFFF3CBA6),
+    hair: Color(0xFF8A5527),
+    hairLight: Color(0xFFB47A3F),
     outfit: Color(0xFFFF4B4B),
     accent: Color(0xFFFF4B4B),
     hairStyle: HairStyle.bun,

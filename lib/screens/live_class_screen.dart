@@ -23,10 +23,17 @@ class LiveClassScreen extends StatefulWidget {
   final Language language;
   final SkillLevel level;
 
+  /// When opened from a lesson on the path, the conversation is focused on
+  /// that lesson's topic.
+  final String? lessonTopic;
+  final String? lessonTitle;
+
   const LiveClassScreen({
     super.key,
     required this.language,
     required this.level,
+    this.lessonTopic,
+    this.lessonTitle,
   });
 
   @override
@@ -104,7 +111,13 @@ class _LiveClassScreenState extends State<LiveClassScreen> {
         '- If the learner speaks in $_nativeLanguageName, gently encourage them '
         'to try again in ${_language.name}. '
         '- Always end your turn with a short question so the learner keeps '
-        'talking.';
+        'talking.' +
+        (widget.lessonTopic == null
+            ? ''
+            : ' This call is the speaking practice for the lesson '
+                '"${widget.lessonTitle}". Keep the conversation focused on '
+                'this topic: ${widget.lessonTopic}. Start by asking the learner '
+                'a question about it.');
   }
 
   Future<void> _start() async {

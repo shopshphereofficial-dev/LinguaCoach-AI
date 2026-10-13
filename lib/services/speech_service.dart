@@ -14,6 +14,10 @@ class SpeechService {
   bool _speaking = false;
   void Function(String message)? _onError;
 
+  /// When false, [speak] does nothing (the learner turned sound off in
+  /// Settings). Kept in sync by the app entry point and the Settings screen.
+  bool enabled = true;
+
   bool get isListening => _speech.isListening;
   bool get isSpeaking => _speaking;
 
@@ -74,7 +78,7 @@ class SpeechService {
   }
 
   Future<void> speak(String text, String languageCode) async {
-    if (text.trim().isEmpty) return;
+    if (!enabled || text.trim().isEmpty) return;
     try {
       await _tts.setLanguage(ttsLocale(languageCode));
       await _tts.setSpeechRate(0.45);

@@ -454,6 +454,51 @@ Provide 8 vocabulary items and 5 example sentences.
     return Lesson.fromJson(map);
   }
 
+  // ------------------------------------------- Structured lesson pack (path)
+
+  /// One call that returns everything a structured lesson needs: vocabulary,
+  /// example sentences, a quiz and a speaking task. Used by the learning path.
+  Future<Map<String, dynamic>> lessonPack({
+    required String targetLanguage,
+    required String nativeLanguage,
+    required SkillLevel level,
+    required String topic,
+  }) async {
+    final system = '''You are an expert $targetLanguage teacher building ONE lesson.
+The learner is at a ${level.label} level; their native language is $nativeLanguage.
+Lesson topic: "$topic".
+Return ONLY a JSON object (no code fences) with exactly these keys:
+{
+ "title": string,
+ "vocabulary": [{"term": string, "translation": string, "example": string}],
+ "sentences": [{"target": string, "native": string}],
+ "quiz": [{"type": string, "prompt": string, "options": [string], "answer": string, "explanation": string}],
+ "speakingTask": string,
+ "speakingHint": string
+}
+Rules:
+- Exactly 6 vocabulary items, each with a short example sentence in $targetLanguage.
+- Exactly 4 example sentences with their $nativeLanguage translation.
+- Exactly 5 quiz questions mixing these types: "multipleChoice", "fillInBlank", "translation", "listening".
+- "multipleChoice" and "listening" must have exactly 4 options; "fillInBlank" and "translation" must have an empty options array. When options exist, "answer" must match one option exactly.
+- Explanations are written in $nativeLanguage.
+- "speakingTask" is one short speaking task in $targetLanguage; "speakingHint" is its translation in $nativeLanguage.
+- No markdown.''';
+
+    return _generateJsonMap(
+      contents: [
+        {
+          'role': 'user',
+          'parts': [
+            {'text': 'Build the lesson now.'}
+          ]
+        }
+      ],
+      systemInstruction: system,
+      temperature: 0.8,
+    );
+  }
+
   // ------------------------------------------------------- 2. Speaking coach
 
   Future<SpeakingPrompt> speakingPrompt({

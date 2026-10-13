@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/curriculum.dart';
 import '../models/language.dart';
 import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
@@ -13,6 +14,7 @@ import 'exercises_screen.dart';
 import 'grammar_screen.dart';
 import 'lessons_screen.dart';
 import 'live_class_screen.dart';
+import 'path_screen.dart';
 import 'roleplay_screen.dart';
 import 'speaking_screen.dart';
 
@@ -45,6 +47,53 @@ class LanguageDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // ------------------------------------------------- learning path
+          Card(
+            color: language.colorFor().withOpacity(0.14),
+            child: InkWell(
+              onTap: () => _open(context, PathScreen(language: language)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            progress.lessonsDone(language.code) == 0
+                                ? 'Start the course'
+                                : 'Continue your course',
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        PillBadge(
+                          label:
+                              '${progress.lessonsDone(language.code)}/${kLessonPath.length}',
+                          color: language.colorFor(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ProgressBar(
+                      value: progress.pathProgress(language.code),
+                      color: language.colorFor(),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'A guided path of ${kLessonPath.length} lessons — new words, '
+                      'practice and a short live chat with your teacher in every one.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           // ---------------------------------------------------- live class
           Card(
             child: InkWell(

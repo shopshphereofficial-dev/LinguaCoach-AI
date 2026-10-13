@@ -6,6 +6,7 @@ import '../models/teacher.dart';
 import '../providers/progress_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/gemini_service.dart';
+import '../services/speech_service.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/common.dart';
 
@@ -93,6 +94,49 @@ class SettingsScreen extends StatelessWidget {
                 'live classes and role-plays, with the voice "${teacher.voiceName}".',
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        SectionCard(
+          title: 'Learning',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Daily XP goal',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<int>(
+                value: SettingsProvider.dailyGoals.contains(settings.dailyGoal)
+                    ? settings.dailyGoal
+                    : SettingsProvider.defaultDailyGoal,
+                isExpanded: true,
+                items: SettingsProvider.dailyGoals
+                    .map((g) => DropdownMenuItem(
+                          value: g,
+                          child: Text('$g XP per day'),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) settings.setDailyGoal(value);
+                },
+              ),
+              const SizedBox(height: 6),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: settings.soundEnabled,
+                title: const Text('Sound'),
+                subtitle: const Text(
+                  'Speak vocabulary and example sentences out loud',
+                ),
+                onChanged: (value) {
+                  settings.setSoundEnabled(value);
+                  context.read<SpeechService>().enabled = value;
+                },
               ),
             ],
           ),

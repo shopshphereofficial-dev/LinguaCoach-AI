@@ -57,4 +57,16 @@ const List<Achievement> kAchievements = [
     description: 'Practise three different languages.',
     icon: '🌍',
   ),
+  Achievement(
+    id: 'pathfinder',
+    title: 'Pathfinder',
+    description: 'Finish 5 lessons on the learning path.',
+    icon: '🗺️',
+  ),
+  Achievement(
+    id: 'course_clear',
+    title: 'Course Clear',
+    description: 'Finish 20 lessons — a whole course!',
+    icon: '🏆',
+  ),
 ];

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/achievement.dart';
 import '../models/language.dart';
 import '../providers/progress_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/common.dart';
 
 /// The Progress tab: level, streak, per-language progress and achievements.
@@ -20,9 +21,50 @@ class ProgressScreen extends StatelessWidget {
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    final settings = context.watch<SettingsProvider>();
+    final goal = settings.dailyGoal;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Today\'s goal',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    Text(
+                      '${progress.todayXp} / $goal XP',
+                      style: theme.textTheme.labelLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ProgressBar(value: goal == 0 ? 0 : progress.todayXp / goal),
+                const SizedBox(height: 6),
+                Text(
+                  progress.todayXp >= goal
+                      ? 'Goal reached — nice work! 🎉'
+                      : '${goal - progress.todayXp} XP to go today.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(18),
