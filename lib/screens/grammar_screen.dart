@@ -69,7 +69,6 @@ class _GrammarScreenState extends State<GrammarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.language.flag} Grammar · ${widget.level.label}'),

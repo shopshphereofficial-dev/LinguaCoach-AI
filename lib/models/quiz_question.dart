@@ -38,11 +38,12 @@ class QuizQuestion {
   }
 
   /// Tolerant comparison used when checking the learner's typed answer.
+  /// Punctuation is stripped and whitespace is collapsed.
   bool matches(String input) {
     String norm(String s) => s
         .toLowerCase()
         .trim()
-        .replaceAll(RegExp(r'[.,!?¿¡"\'`]'), '')
+        .replaceAll(RegExp(r'''[.,!?¿¡"'`]'''), '')
         .replaceAll(RegExp(r'\s+'), ' ');
     return norm(input) == norm(answer);
   }

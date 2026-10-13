@@ -3,20 +3,29 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 /// Wraps speech-to-text (for speaking practice) and text-to-speech (to model
 /// correct pronunciation).
+///
+/// The error callback is registered on `initialize` because `listen` does not
+/// accept an `onError` parameter.
 class SpeechService {
   final SpeechToText _speech = SpeechToText();
   final FlutterTts _tts = FlutterTts();
 
   bool _sttReady = false;
   bool _speaking = false;
+  void Function(String message)? _onError;
 
   bool get isListening => _speech.isListening;
   bool get isSpeaking => _speaking;
 
-  Future<bool> initStt() async {
+  /// Initialises the recogniser once. [onError] is remembered for the session.
+  Future<bool> initStt({void Function(String message)? onError}) async {
+    if (onError != null) _onError = onError;
     if (_sttReady) return true;
     try {
-      _sttReady = await _speech.initialize();
+      _sttReady = await _speech.initialize(
+        onError: (error) => _onError?.call(error.errorMsg),
+        debugLogging: false,
+      );
     } catch (_) {
       _sttReady = false;
     }
@@ -28,25 +37,32 @@ class SpeechService {
     required void Function(String text, bool isFinal) onResult,
     void Function(String message)? onError,
   }) async {
-    final ready = await initStt();
+    if (onError != null) _onError = onError;
+
+    final ready = await initStt(onError: onError);
     if (!ready) {
-      onError?.call(
+      _onError?.call(
         'Speech recognition is not available on this device. '
         'You can still type your answer.',
       );
       return;
     }
-    await _speech.listen(
-      onResult: (result) => onResult(result.recognizedWords, result.finalResult),
-      localeId: sttLocale(languageCode),
-      listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 4),
-      onError: (error) => onError?.call(error.errorMsg),
-      listenOptions: SpeechListenOptions(
-        partialResults: true,
-        cancelOnError: true,
-      ),
-    );
+
+    try {
+      await _speech.listen(
+        onResult: (result) =>
+            onResult(result.recognizedWords, result.finalResult),
+        localeId: sttLocale(languageCode),
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 4),
+        listenOptions: SpeechListenOptions(
+          partialResults: true,
+          cancelOnError: true,
+        ),
+      );
+    } catch (e) {
+      _onError?.call('Could not start listening: $e');
+    }
   }
 
   Future<void> stopListening() async {
@@ -67,7 +83,7 @@ class SpeechService {
       _speaking = true;
       await _tts.speak(text);
     } catch (_) {
-      // TTS language may not be installed; fail quietly.
+      // The TTS language may not be installed; fail quietly.
     } finally {
       _speaking = false;
     }
