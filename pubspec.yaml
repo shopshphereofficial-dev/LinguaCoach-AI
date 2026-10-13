@@ -14,7 +14,9 @@ dependencies:
   http: ^1.2.1
   shared_preferences: ^2.2.3
   flutter_secure_storage: ^9.2.2
-  speech_to_text: ^6.6.2
+  # Pinned to 6.6.0 on purpose: 6.6.1+ depends on `js ^0.7.1`, which conflicts
+  # with the `js ^0.6.3` that flutter_secure_storage_web requires.
+  speech_to_text: 6.6.0
   flutter_tts: ^4.0.2
 
 dev_dependencies:
